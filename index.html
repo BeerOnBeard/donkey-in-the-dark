@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        --cursor-x: -1000px;
+        --cursor-y: -1000px;
+        --flashlight-width: 0px;
+        --flashlight-height: 0px;
+        --donkey-width: 0;
+        --donkey-height: 0;
+        --donkey-x: 0;
+        --donkey-y: 0;
+      }
+      html,body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        cursor: crosshair;
+      }
+      .root {
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          var(--flashlight-width) var(--flashlight-height) at var(--cursor-x) var(--cursor-y),
+          rgba(0,0,0,0) 0%,
+          rgba(0,0,0,0.5) 80%,
+          rgba(0,0,0,1) 100%
+        )
+      }
+      .donkey {
+        width: var(--donkey-width);
+        height: var(--donkey-height);
+        position: absolute;
+        z-index: -1;
+        top: var(--donkey-y);
+        left: var(--donkey-x);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="root">
+      <img class="donkey" src="donkey.png" />
+    </div>
+    <script>
+      class Game {
+        // expects { viewport: { width, height } }
+        constructor({ viewport }) {
+          this._map = {
+            width: 1000,
+            height: 1000
+          };
+          this._flashlight = {
+            width: 100,
+            height: 100
+          };
+          this._donkey = {
+            width: 100,
+            height: 100,
+            x: 0,
+            y: 0
+          };
+
+          this.randomizeDonkeyLocation();
+          this.updateViewport(viewport);
+        }
+
+        randomizeDonkeyLocation() {
+          this._donkey.x = Math.floor(Math.random() * (this._map.width - this._donkey.width));
+          this._donkey.y = Math.floor(Math.random() * (this._map.height - this._donkey.height));
+        }
+
+        updateViewport(viewport) {
+          this._factor = {
+            width: viewport.width / this._map.width,
+            height: viewport.height / this._map.height
+          }
+        }
+
+        areCoordinatesOnDonkey(coordinates) {
+          const donkey = this.donkey;
+          return donkey.x < coordinates.x && coordinates.x < donkey.x + donkey.width
+              && donkey.y < coordinates.y && coordinates.y < donkey.y + donkey.height;
+        }
+
+        get flashlight() {
+          return {
+            width: this._flashlight.width * this._factor.width,
+            height: this._flashlight.height * this._factor.height
+          };
+        }
+
+        get donkey() {
+          return {
+            width: this._donkey.width * this._factor.width,
+            height: this._donkey.height * this._factor.height,
+            x: this._donkey.x * this._factor.width,
+            y: this._donkey.y * this._factor.height
+          };
+        }
+      }
+
+      (function(){
+        const setCssPropertyPixels = (name, value) => document.documentElement.style.setProperty(name, value + 'px');
+
+        const setCss = game => {
+          setCssPropertyPixels('--flashlight-width', game.flashlight.width);
+          setCssPropertyPixels('--flashlight-height', game.flashlight.height);
+          setCssPropertyPixels('--donkey-width', game.donkey.width);
+          setCssPropertyPixels('--donkey-height', game.donkey.height);
+          setCssPropertyPixels('--donkey-x', game.donkey.x);
+          setCssPropertyPixels('--donkey-y', game.donkey.y);
+        };
+
+
+        const game = new Game({
+          viewport: {
+            width: document.documentElement.clientWidth,
+            height: document.documentElement.clientHeight
+          }
+        });
+
+        setCss(game);
+        window.addEventListener('resize', e => {
+          game.updateViewport({
+            width: document.documentElement.clientWidth,
+            height: document.documentElement.clientHeight
+          });
+
+          setCss(game);
+        });
+
+        document.addEventListener('mousemove', e => {
+          setCssPropertyPixels('--cursor-x', e.clientX);
+          setCssPropertyPixels('--cursor-y', e.clientY);
+        });
+
+        document.addEventListener('click', e => {
+          if (game.areCoordinatesOnDonkey({ x: e.clientX, y: e.clientY })) {
+            alert('great job!');
+            game.randomizeDonkeyLocation();
+            setCss(game);
+          }
+        });
+      }());
+    </script>
+  </body>
+</html>
