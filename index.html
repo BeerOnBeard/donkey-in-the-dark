@@ -13,14 +13,22 @@
         --donkey-x: 0;
         --donkey-y: 0;
       }
-      html,body {
+      html,body, #root {
         width: 100%;
         height: 100%;
         margin: 0;
         padding: 0;
         cursor: crosshair;
       }
-      .root {
+      .start, .play-again {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-flow: column;
+      }
+      .game {
         width: 100%;
         height: 100%;
         background: radial-gradient(
@@ -41,9 +49,49 @@
     </style>
   </head>
   <body>
-    <div class="root">
-      <img class="donkey" src="donkey.png" />
-    </div>
+    <div id="root"></div>
+    <template id="start">
+      <div class="start">
+        <h1>Donkey in the Dark</h1>
+        <div>Can you find the donkey?</div>
+        <button id="start-game" onclick="TemplateManager.game()">Play</button>
+      </div>
+    </template>
+    <template id="game">
+      <div class="game">
+        <img class="donkey" src="donkey.png" />
+      </div>
+    </template>
+    <template id="play-again">
+      <div class="play-again">
+        <h1>Great job!</h1>
+        <button onclick="TemplateManager.game()">Play Again</button>
+      </div>
+    </template>
+    <script>
+      TemplateManager = (() => {
+        _swap = (child) => {
+          let root = document.getElementById('root');
+          while(root.lastChild && root.removeChild(root.lastChild));
+          root.appendChild(child);
+        };
+
+        return {
+          start() {
+            let template = document.getElementById('start').content.cloneNode(true);
+            _swap(template);
+          },
+          game() {
+            let template = document.getElementById('game').content.cloneNode(true);
+            _swap(template);
+          },
+          playAgain() {
+            let template = document.getElementById('play-again').content.cloneNode(true);
+            _swap(template);
+          }
+        };
+      })();
+    </script>
     <script>
       class Game {
         // expects { viewport: { width, height } }
@@ -103,6 +151,7 @@
       }
 
       (function(){
+        TemplateManager.start();
         const setCssPropertyPixels = (name, value) => document.documentElement.style.setProperty(name, value + 'px');
 
         const setCss = game => {
@@ -139,7 +188,7 @@
 
         document.addEventListener('click', e => {
           if (game.areCoordinatesOnDonkey({ x: e.clientX, y: e.clientY })) {
-            alert('great job!');
+            TemplateManager.playAgain();
             game.randomizeDonkeyLocation();
             setCss(game);
           }
