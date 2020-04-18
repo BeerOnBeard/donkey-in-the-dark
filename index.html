@@ -136,35 +136,65 @@
             <svg>
               <use xlink:href="#donkey"></use>
             </svg>
-            <button>Play</button>
+            <button onclick="gameController.play('donkey')">Play</button>
           </div>
           <div class="character-chooser__character" data-character="dinosaur">
             <svg>
               <use xlink:href="#dinosaur"></use>
             </svg>
-            <button>Play</button>
+            <button onclick="gameController.play('dinosaur')">Play</button>
           </div>
           <div class="character-chooser__character" data-character="duck">
             <svg>
               <use xlink:href="#duck"></use>
             </svg>
-            <button>Play</button>
+            <button onclick="gameController.play('duck')">Play</button>
           </div>
         </div>
       </div>
     </template>
     <template id="game">
       <div class="game">
-        <img class="character" src="donkey.png" />
+        <svg class="character">
+          <use xlink:href="#donkey"></use>
+        </svg>
       </div>
     </template>
     <template id="play-again">
       <div class="play-again">
         <h1>Great job!</h1>
-        <button onclick="TemplateManager.game()">Play Again</button>
+        <button onclick="gameController.start()">Play Again</button>
       </div>
     </template>
-    <script>
+    <script id="GameBoard">
+      // Represents the game board before client-specific resizing
+      class GameState {
+        constructor() {
+          this.map = {
+            width: 1000,
+            height: 1000
+          };
+
+          this.flashlight = {
+            width: 100,
+            height: 100
+          };
+
+          this.character = {
+            width: 100,
+            height: 100,
+            x: 0,
+            y: 0
+          };
+        }
+
+        randomizeCharacterLocation() {
+          this.character.x = Math.floor(Math.random() * (this.map.width - this.character.width));
+          this.character.y = Math.floor(Math.random() * (this.map.height - this.character.height));
+        }
+      }
+    </script>
+    <script id="CharacterRotator">
       CharacterRotator = (() => {
         const characterClassName = 'character-chooser__character',
               selectedCharacterClassName = 'character-chooser__character--selected',
@@ -207,8 +237,8 @@
         }
       })();
     </script>
-    <script>
-      TemplateManager = (() => {
+    <script id="DomController">
+      DomController = (() => {
         const _swap = (child) => {
           let root = document.getElementById('root');
           while(root.lastChild && root.removeChild(root.lastChild));
@@ -216,130 +246,128 @@
         };
 
         return {
-          start() {
+          showStart() {
             let template = document.getElementById('start').content.cloneNode(true);
             _swap(template);
             CharacterRotator.start();
           },
-          game() {
+          showGame(character) {
             CharacterRotator.stop();
             let template = document.getElementById('game').content.cloneNode(true);
+            template.children[0].children[0].children[0].setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#' + character);
             _swap(template);
 
           },
-          playAgain() {
+          showPlayAgain() {
             CharacterRotator.stop();
             let template = document.getElementById('play-again').content.cloneNode(true);
             _swap(template);
           }
-        };
+        }
       })();
     </script>
-    <script>
-      class Game {
-        // expects { viewport: { width, height } }
-        constructor({ viewport }) {
-          this._map = {
-            width: 1000,
-            height: 1000
-          };
-          this._flashlight = {
-            width: 100,
-            height: 100
-          };
-          this._character = {
-            width: 100,
-            height: 100,
-            x: 0,
-            y: 0
-          };
+    <script id="StyleController">
+      StyleController = (() => {
+        const _setCssPropertyPixels = (name, value) => document.documentElement.style.setProperty(name, value + 'px');
 
-          this.randomizeCharacterLocation();
-          this.updateViewport(viewport);
-        }
-
-        randomizeCharacterLocation() {
-          this._character.x = Math.floor(Math.random() * (this._map.width - this._character.width));
-          this._character.y = Math.floor(Math.random() * (this._map.height - this._character.height));
-        }
-
-        updateViewport(viewport) {
-          this._factor = {
-            width: viewport.width / this._map.width,
-            height: viewport.height / this._map.height
+        return {
+          updateFlashlight(width, height) {
+            _setCssPropertyPixels('--flashlight-width', width);
+            _setCssPropertyPixels('--flashlight-height', height);
+          },
+          updateCharacter(width, height, x, y) {
+            _setCssPropertyPixels('--character-width', width);
+            _setCssPropertyPixels('--character-height', height);
+            _setCssPropertyPixels('--character-x', x);
+            _setCssPropertyPixels('--character-y', y);
+          },
+          updateCursor(x, y) {
+            _setCssPropertyPixels('--cursor-x', x);
+            _setCssPropertyPixels('--cursor-y', y);
           }
         }
+      })();
+    </script>
+    <script id="GameController">
+      class GameController {
+        constructor() {
+          this._gameState = new GameState();
+          this._playing = false;
 
-        areCoordinatesOnCharacter(coordinates) {
-          const character = this.character;
-          return character.x < coordinates.x && coordinates.x < character.x + character.width
-              && character.y < coordinates.y && coordinates.y < character.y + character.height;
+          this._updateClientSize(document.documentElement.clientWidth, document.documentElement.clientHeight);
+
+          window.addEventListener('resize', _ => {
+            this._updateClientSize(document.documentElement.clientWidth, document.documentElement.clientHeight);
+          });
+
+          document.addEventListener('mousemove', e => {
+            StyleController.updateCursor(e.clientX, e.clientY);
+          });
+
+          document.addEventListener('click', e => {
+            console.log('click')
+            if (!this._playing) {
+              return;
+            }
+
+            if (!this._areCoordinatesOnCharacter(e.clientX, e.clientY)) {
+              return;
+            }
+
+            this._playing = false;
+            DomController.showPlayAgain();
+          });
         }
 
-        // Get the flashlight information with the user factor taken into account.
-        get flashlight() {
-          return {
-            width: this._flashlight.width * this._factor.width,
-            height: this._flashlight.height * this._factor.height
+        _updateClientSize(width, height) {
+          this._factor = {
+            width: width / this._gameState.map.width,
+            height: height / this._gameState.map.height
           };
+
+          this._flashlight = {
+            width: this._gameState.flashlight.width * this._factor.width,
+            height: this._gameState.flashlight.height * this._factor.height
+          };
+
+          this._character = {
+            width: this._gameState.character.width * this._factor.width,
+            height: this._gameState.character.height * this._factor.height,
+            x: this._gameState.character.x * this._factor.width,
+            y: this._gameState.character.y * this._factor.height
+          };
+
+          StyleController.updateFlashlight(this._flashlight.width, this._flashlight.height);
+          StyleController.updateCharacter(this._character.width, this._character.height, this._character.x, this._character.y);
         }
 
-        // Get the character information with user factor taken into account.
-        get character() {
-          return {
-            width: this._character.width * this._factor.width,
-            height: this._character.height * this._factor.height,
-            x: this._character.x * this._factor.width,
-            y: this._character.y * this._factor.height
-          };
+        _updateCharacterLocation() {
+          this._character.x = this._gameState.character.x * this._factor.width;
+          this._character.y = this._gameState.character.y * this._factor.height;
+          StyleController.updateCharacter(this._character.width, this._character.height, this._character.x, this._character.y);
+        }
+
+        _areCoordinatesOnCharacter(x, y) {
+          return this._character.x < x && x < this._character.x + this._character.width
+              && this._character.y < y && y < this._character.y + this._character.height;
+        }
+
+        start() {
+          DomController.showStart();
+        }
+
+        play(character) {
+          this._gameState.randomizeCharacterLocation();
+          this._updateCharacterLocation();
+          this._playing = true;
+          DomController.showGame(character);
         }
       }
     </script>
-    <script>
+    <script id="onLoad">
       (() => {
-        TemplateManager.start();
-
-        const setCssPropertyPixels = (name, value) => document.documentElement.style.setProperty(name, value + 'px');
-
-        const setCss = game => {
-          setCssPropertyPixels('--flashlight-width', game.flashlight.width);
-          setCssPropertyPixels('--flashlight-height', game.flashlight.height);
-          setCssPropertyPixels('--character-width', game.character.width);
-          setCssPropertyPixels('--character-height', game.character.height);
-          setCssPropertyPixels('--character-x', game.character.x);
-          setCssPropertyPixels('--character-y', game.character.y);
-        };
-
-        const game = new Game({
-          viewport: {
-            width: document.documentElement.clientWidth,
-            height: document.documentElement.clientHeight
-          }
-        });
-
-        setCss(game);
-
-        window.addEventListener('resize', e => {
-          game.updateViewport({
-            width: document.documentElement.clientWidth,
-            height: document.documentElement.clientHeight
-          });
-
-          setCss(game);
-        });
-
-        document.addEventListener('mousemove', e => {
-          setCssPropertyPixels('--cursor-x', e.clientX);
-          setCssPropertyPixels('--cursor-y', e.clientY);
-        });
-
-        document.addEventListener('click', e => {
-          if (game.areCoordinatesOnCharacter({ x: e.clientX, y: e.clientY })) {
-            TemplateManager.playAgain();
-            game.randomizeCharacterLocation();
-            setCss(game);
-          }
-        });
+        window.gameController = new GameController();
+        window.gameController.start();
       })();
     </script>
   </body>
