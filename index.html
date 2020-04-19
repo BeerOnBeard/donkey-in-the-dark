@@ -167,7 +167,7 @@
       </div>
     </template>
     <script id="GameState">
-      // Represents the game board before client-specific resizing
+      /* Represents the game board before client-specific resizing*/
       class GameState {
         constructor() {
           this.map = {
@@ -252,7 +252,7 @@
           this._mouseMoveEventHandler = mouseMoveEventHandler;
           this._sendResizedEvents = false;
 
-          // trigger the resized event to provide the initial dimensions
+          /* trigger the resized event to provide the initial dimensions*/
           resizedEventHandler(document.documentElement.clientWidth, document.documentElement.clientHeight);
           window.addEventListener('resize', _ => {
             if (!this._sendResizedEvents) {
@@ -390,7 +390,7 @@
     </script>
     <script id="onLoad">
       (() => {
-        // NOTE: The buttons on the start and play-again pages use the gameController directly
+        /* NOTE: The buttons on the start and play-again pages use the gameController directly*/
         window.gameController = new GameController();
         window.gameController.start();
       })();

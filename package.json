@@ -1,0 +1,10 @@
+{
+  "name": "donkey-in-the-dark",
+  "description": "Can you find the donkey in the dark?",
+  "scripts": {
+    "minify": "node minify.js"
+  },
+  "dependencies": {
+    "html-minifier": "^4.0.0"
+  }
+}
