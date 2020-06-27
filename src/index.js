@@ -1,5 +1,14 @@
-import GameController from './GameController.js';
+import Vue from 'vue';
+import VueRouter from 'vue-router';
+import App from './App.vue';
+import { routes } from './routing/routes.js';
 
-/* NOTE: The buttons on the start and play-again pages use the gameController directly*/
-window.gameController = new GameController();
-window.gameController.start();
+Vue.use(VueRouter);
+
+const router = new VueRouter({ routes });
+
+new Vue({
+  el: '#root',
+  router: router,
+  render: h => h(App)
+});
