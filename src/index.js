@@ -1,14 +1,27 @@
-import Vue from 'vue';
-import VueRouter from 'vue-router';
-import App from './App.vue';
-import { routes } from './routing/routes.js';
+import React from 'react';
+import ReactDom from 'react-dom';
+import StartPage from './StartPage.js';
+import GamePage from './GamePage.js';
+import SuccessPage from './SuccessPage.js';
+import routes from './routing/routes.js';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route
+} from 'react-router-dom';
 
-Vue.use(VueRouter);
-
-const router = new VueRouter({ routes });
-
-new Vue({
-  el: '#root',
-  router: router,
-  render: h => h(App)
-});
+ReactDom.render(
+<Router>
+  <Switch>
+    <Route path={routes.success}>
+      <SuccessPage />
+    </Route>
+    <Route path={routes.game}>
+      <GamePage />
+    </Route>
+    <Route path={routes.start}>
+      <StartPage />
+    </Route>
+  </Switch>
+</Router>
+, document.getElementById('root'));

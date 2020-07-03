@@ -1,7 +1,7 @@
-const names = {
+const characterNames = {
   donkey: 'Donkey',
   dinosaur: 'Dinosaur',
   duck: 'Duck'
 };
 
-export default names;
+export default characterNames;
