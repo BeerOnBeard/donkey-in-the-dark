@@ -60,8 +60,8 @@ const GamePage = props => {
 
   return (
     <Wrapper
-      flashlightWidth="12rem"
-      flashlightHeight="12rem"
+      flashlightWidth="100px"
+      flashlightHeight="100px"
       cursorX={cursor.x}
       cursorY={cursor.y}
       onMouseMove={event => setCursor({ x: event.pageX + 'px', y: event.pageY + 'px' })}
