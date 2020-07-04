@@ -40,8 +40,8 @@ const DisplayCharacter = props => {
 
 const AbsolutelyPositionedDisplayCharacter = styled(DisplayCharacter)`
   position: absolute;
-  top: ${props => props.x}px;
-  left: ${props => props.y}px;
+  top: ${props => props.y}px;
+  left: ${props => props.x}px;
 `;
 
 const GamePage = props => {
