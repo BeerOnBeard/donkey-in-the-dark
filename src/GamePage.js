@@ -5,6 +5,7 @@ import Donkey from './characters/Donkey.js';
 import Dinosaur from './characters/Dinosaur.js';
 import Duck from './characters/Duck.js';
 import characterNames from './characters/names.js';
+import { getGameState, setGameState } from './PersistentGameState.js';
 
 const Wrapper = styled.div.attrs(props => {
   const backgroundGradient = `radial-gradient(
@@ -55,6 +56,8 @@ const GamePage = props => {
     y: Math.floor(Math.random() * (window.innerHeight - characterHeight))
   });
 
+  const [ startTime ] = useState(Date.now());
+
   return (
     <Wrapper
       flashlightWidth="12rem"
@@ -69,7 +72,22 @@ const GamePage = props => {
         characterHeight={characterHeight + 'px'}
         x={characterLocation.x}
         y={characterLocation.y}
-        onClick={ e => history.push('/success') }
+        onClick={ e => {
+          const time = Date.now() - startTime;
+          const currentState = getGameState();
+          const topTenWins = currentState.topTenWins ?? [];
+          const updatedTopTenWins = topTenWins
+            .concat([ { character, time, date: Date.now() } ])
+            .sort((a, b) => a.time - b.time)
+            .slice(0, 10);
+          
+          setGameState({
+            ...currentState,
+            topTenWins: updatedTopTenWins
+          });
+          
+          history.push('/success');
+        }}
       />
     </Wrapper>
   )
